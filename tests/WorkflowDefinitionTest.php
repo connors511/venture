@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Bus;
 use Opis\Closure\SerializableClosure;
 use Sassnowski\Venture\Models\Workflow;
 use Sassnowski\Venture\AbstractWorkflow;
+use function PHPUnit\Framework\assertCount;
 use function PHPUnit\Framework\assertTrue;
 use Sassnowski\Venture\WorkflowDefinition;
 use function PHPUnit\Framework\assertFalse;
@@ -319,6 +320,33 @@ it('can add another workflow', function () {
     assertTrue($definition->hasJobWithDependencies(TestJob4::class, [TestJob1::class]));
     assertTrue($definition->hasJobWithDependencies(TestJob5::class, [TestJob1::class]));
     assertTrue($definition->hasJobWithDependencies(TestJob6::class, [TestJob4::class]));
+});
+
+it('calls the before connect hook before adding job to another workflow if provided', function () {
+    $workflow = new class extends AbstractWorkflow {
+        public function definition(): WorkflowDefinition
+        {
+            return WorkflowFacade::define('::name::')
+                ->addJob(new TestJob4())
+                ->addJob(new TestJob5())
+                ->addJob(new TestJob6(), [TestJob4::class]);
+        }
+
+        public function beforeConnectingJob(array $job): array
+        {
+            $job['name'] = '::new-name::';
+            return $job;
+        }
+    };
+    $definition = (new WorkflowDefinition())
+        ->addJob(new TestJob1())
+        ->addJob(new TestJob2())
+        ->addJob(new TestJob3(), [TestJob1::class])
+        ->addWorkflow($workflow, [TestJob1::class]);
+
+    assertEquals('::new-name::', $definition->getJobByClassName(TestJob4::class)['name']);
+    assertEquals('::new-name::', $definition->getJobByClassName(TestJob5::class)['name']);
+    assertEquals('::new-name::', $definition->getJobByClassName(TestJob6::class)['name']);
 });
 
 it('throws an exception when trying to add a job without the ShouldQueue interface', function () {

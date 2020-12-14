@@ -77,7 +77,7 @@ class WorkflowDefinition
         $this->graph->connectGraph($definition->graph, get_class($workflow), $dependencies);
 
         foreach ($definition->jobs as $job) {
-            $this->jobs[] = $job;
+            $this->jobs[] = $workflow->beforeConnectingJob($job);
         }
 
         return $this;
@@ -173,7 +173,7 @@ class WorkflowDefinition
         return $job['job']->delay == $delay;
     }
 
-    private function getJobByClassName(string $className): ?array
+    public function getJobByClassName(string $className): ?array
     {
         return collect($this->jobs)->first(function (array $job) use ($className) {
             return get_class($job['job']) === $className;
