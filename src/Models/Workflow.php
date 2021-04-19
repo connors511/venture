@@ -193,6 +193,12 @@ class Workflow extends Model
         ]);
 
         DB::transaction(function () use ($job) {
+            /** @var self $workflow */
+            $workflow = $this->newQuery()
+                ->whereKey($this->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
             logger('Workflow, transaction', [
                 'stepId' => $job->stepId,
                 'jobName' => $job::class,
@@ -201,8 +207,8 @@ class Workflow extends Model
                 'jobsProcessed' => $this->jobs_processed
             ]);
 
-            $this->finished_jobs = array_merge($this->finished_jobs, [$job->jobId ?: get_class($job)]);
-            $this->jobs_processed++;
+            $this->finished_jobs = array_merge($workflow->finished_jobs, [$job->jobId ?: get_class($job)]);
+            $this->jobs_processed = $workflow->jobs_processed + 1;
 
             logger('Workflow, ready to save', [
                 'stepId' => $job->stepId,
