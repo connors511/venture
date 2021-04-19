@@ -34,7 +34,7 @@ class WorkflowEventSubscriber
             logger("WorkflowEventSubscriber, handleJobProcessed -- job is released", [
                 'jobId' => $event->job->getJobId(),
                 'jobUuid' => $event->job->uuid(),
-                'jobName' => $event->job->getName(),
+                'jobName' => $event->job->resolveName(),
                 'stepId' => $this->getJobInstance($event->job)->stepId
             ]);
 
@@ -47,7 +47,7 @@ class WorkflowEventSubscriber
             logger("WorkflowEventSubscriber, handleJobProcessed -- further process", [
                 'jobId' => $event->job->getJobId(),
                 'jobUuid' => $event->job->uuid(),
-                'jobName' => $event->job->getName(),
+                'jobName' => $event->job->resolveName(),
                 'stepId' => $jobInstance->stepId
             ]);
             optional($jobInstance->workflow())->onStepFinished($jobInstance);

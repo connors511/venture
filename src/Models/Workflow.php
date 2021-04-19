@@ -68,9 +68,8 @@ class Workflow extends Model
     public function onStepFinished($job): void
     {
         logger('Workflow, onStepFinished', [
-            'jobId' => $job->id,
-            'jobUuid' => $job->uuid,
-            'jobName' => $job->name,
+            'stepId' => $job->stepId,
+            'jobName' => $job::class,
             'workflowId' => $this->id,
         ]);
 
@@ -94,9 +93,8 @@ class Workflow extends Model
             ->filter(fn ($job) => $this->canJobRun($job))
             ->each(function ($job) {
                 logger('Workflow, dispatching next job', [
-                    'jobId' => $job->id,
-                    'jobUuid' => $job->uuid,
-                    'jobName' => $job->name,
+                    'stepId' => $job->stepId,
+                    'jobName' => $job::class,
                     'workflowId' => $this->id,
                 ]);
 
@@ -104,9 +102,8 @@ class Workflow extends Model
             });
 
         logger('Workflow, onStepFinished done', [
-            'jobId' => $job->id,
-            'jobUuid' => $job->uuid,
-            'jobName' => $job->name,
+            'stepId' => $job->stepId,
+            'jobName' => $job::class,
             'workflowId' => $this->id,
         ]);
     }
@@ -188,9 +185,8 @@ class Workflow extends Model
     private function markJobAsFinished($job): void
     {
         logger('Workflow, markJobAsFinished', [
-            'jobId' => $job->id,
-            'jobUuid' => $job->uuid,
-            'jobName' => $job->name,
+            'stepId' => $job->stepId,
+            'jobName' => $job::class,
             'workflowId' => $this->id,
             'finishedJobs' => $this->finished_jobs,
             'jobsProcessed' => $this->jobs_processed
@@ -198,9 +194,8 @@ class Workflow extends Model
 
         DB::transaction(function () use ($job) {
             logger('Workflow, transaction', [
-                'jobId' => $job->id,
-                'jobUuid' => $job->uuid,
-                'jobName' => $job->name,
+                'stepId' => $job->stepId,
+                'jobName' => $job::class,
                 'workflowId' => $this->id,
                 'finishedJobs' => $this->finished_jobs,
                 'jobsProcessed' => $this->jobs_processed
@@ -210,9 +205,8 @@ class Workflow extends Model
             $this->jobs_processed++;
 
             logger('Workflow, ready to save', [
-                'jobId' => $job->id,
-                'jobUuid' => $job->uuid,
-                'jobName' => $job->name,
+                'stepId' => $job->stepId,
+                'jobName' => $job::class,
                 'workflowId' => $this->id,
                 'finishedJobs' => $this->finished_jobs,
                 'jobsProcessed' => $this->jobs_processed
@@ -222,9 +216,8 @@ class Workflow extends Model
             optional($job->step())->update(['finished_at' => now()]);
 
             logger('Workflow, transaction completed', [
-                'jobId' => $job->id,
-                'jobUuid' => $job->uuid,
-                'jobName' => $job->name,
+                'stepId' => $job->stepId,
+                'jobName' => $job::class,
                 'workflowId' => $this->id,
                 'finishedJobs' => $this->finished_jobs,
                 'jobsProcessed' => $this->jobs_processed
