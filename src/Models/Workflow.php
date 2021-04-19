@@ -67,6 +67,13 @@ class Workflow extends Model
 
     public function onStepFinished($job): void
     {
+        logger('Workflow, onStepFinished', [
+            'jobId' => $job->id,
+            'jobUuid' => $job->uuid,
+            'jobName' => $job->name,
+            'workflowId' => $this->id,
+        ]);
+
         $this->markJobAsFinished($job);
 
         if ($this->isCancelled()) {
@@ -74,6 +81,10 @@ class Workflow extends Model
         }
 
         if ($this->isFinished()) {
+            logger('Workflow, isFinished', [
+                'workflowId' => $this->id,
+            ]);
+
             $this->update(['finished_at' => Carbon::now()]);
             $this->runThenCallback();
             return;
@@ -82,8 +93,22 @@ class Workflow extends Model
         collect($job->dependantJobs)
             ->filter(fn ($job) => $this->canJobRun($job))
             ->each(function ($job) {
+                logger('Workflow, dispatching next job', [
+                    'jobId' => $job->id,
+                    'jobUuid' => $job->uuid,
+                    'jobName' => $job->name,
+                    'workflowId' => $this->id,
+                ]);
+
                 $this->dispatchJob($job);
             });
+
+        logger('Workflow, onStepFinished done', [
+            'jobId' => $job->id,
+            'jobUuid' => $job->uuid,
+            'jobName' => $job->name,
+            'workflowId' => $this->id,
+        ]);
     }
 
     public function onStepFailed($job, Throwable $e): void
@@ -162,12 +187,48 @@ class Workflow extends Model
 
     private function markJobAsFinished($job): void
     {
+        logger('Workflow, markJobAsFinished', [
+            'jobId' => $job->id,
+            'jobUuid' => $job->uuid,
+            'jobName' => $job->name,
+            'workflowId' => $this->id,
+            'finishedJobs' => $this->finished_jobs,
+            'jobsProcessed' => $this->jobs_processed
+        ]);
+
         DB::transaction(function () use ($job) {
+            logger('Workflow, transaction', [
+                'jobId' => $job->id,
+                'jobUuid' => $job->uuid,
+                'jobName' => $job->name,
+                'workflowId' => $this->id,
+                'finishedJobs' => $this->finished_jobs,
+                'jobsProcessed' => $this->jobs_processed
+            ]);
+
             $this->finished_jobs = array_merge($this->finished_jobs, [$job->jobId ?: get_class($job)]);
             $this->jobs_processed++;
+
+            logger('Workflow, ready to save', [
+                'jobId' => $job->id,
+                'jobUuid' => $job->uuid,
+                'jobName' => $job->name,
+                'workflowId' => $this->id,
+                'finishedJobs' => $this->finished_jobs,
+                'jobsProcessed' => $this->jobs_processed
+            ]);
             $this->save();
 
             optional($job->step())->update(['finished_at' => now()]);
+
+            logger('Workflow, transaction completed', [
+                'jobId' => $job->id,
+                'jobUuid' => $job->uuid,
+                'jobName' => $job->name,
+                'workflowId' => $this->id,
+                'finishedJobs' => $this->finished_jobs,
+                'jobsProcessed' => $this->jobs_processed
+            ]);
         });
     }
 

@@ -31,12 +31,25 @@ class WorkflowEventSubscriber
     public function handleJobProcessed(JobProcessed $event): void
     {
         if ($event->job->isReleased()) {
+            logger("WorkflowEventSubscriber, handleJobProcessed -- job is released", [
+                'jobId' => $event->job->getJobId(),
+                'jobUuid' => $event->job->uuid(),
+                'jobName' => $event->job->getName(),
+                'stepId' => $this->getJobInstance($event->job)->stepId
+            ]);
+
             return;
         }
-        
+
         $jobInstance = $this->getJobInstance($event->job);
 
         if ($this->isWorkflowStep($jobInstance)) {
+            logger("WorkflowEventSubscriber, handleJobProcessed -- further process", [
+                'jobId' => $event->job->getJobId(),
+                'jobUuid' => $event->job->uuid(),
+                'jobName' => $event->job->getName(),
+                'stepId' => $jobInstance->stepId
+            ]);
             optional($jobInstance->workflow())->onStepFinished($jobInstance);
         }
     }
