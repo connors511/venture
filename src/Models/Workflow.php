@@ -101,7 +101,7 @@ class Workflow extends Model
                 'failed_at' => now(),
                 'exception' => (string) $e,
             ]);
-        });
+        }, 5);
 
         $this->runCallback($this->catch_callback, $this, $job, $e);
     }
@@ -178,7 +178,7 @@ class Workflow extends Model
             $this->save();
 
             optional($job->step())->update(['finished_at' => now()]);
-        });
+        }, 5);
     }
 
     private function canJobRun($job): bool
